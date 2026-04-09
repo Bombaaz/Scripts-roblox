@@ -1,0 +1,325 @@
+-- ====================
+-- CANDY EGGS AUTO FARM
+-- ====================
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CandyEggsFarm"
+screenGui.Parent = game.CoreGui
+screenGui.ResetOnSpawn = false
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 260, 0, 160)
+mainFrame.Position = UDim2.new(0.5, -130, 0.5, -80)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+mainFrame.BackgroundTransparency = 0.3
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = mainFrame
+
+-- Title Bar
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 35)
+titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+titleBar.BackgroundTransparency = 0.4
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 10)
+titleCorner.Parent = titleBar
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -80, 1, 0)
+titleLabel.Position = UDim2.new(0, 12, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "CANDY EGGS FARM"
+titleLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+titleLabel.TextSize = 13
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = titleBar
+
+-- Minimize Button
+local minButton = Instance.new("TextButton")
+minButton.Size = UDim2.new(0, 24, 0, 24)
+minButton.Position = UDim2.new(1, -60, 0, 5)
+minButton.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+minButton.BackgroundTransparency = 0.3
+minButton.Text = "_"
+minButton.TextColor3 = Color3.fromRGB(220, 220, 220)
+minButton.TextSize = 18
+minButton.Font = Enum.Font.GothamBold
+minButton.Parent = titleBar
+
+local minCorner = Instance.new("UICorner")
+minCorner.CornerRadius = UDim.new(0, 5)
+minCorner.Parent = minButton
+
+-- Close Button
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 24, 0, 24)
+closeButton.Position = UDim2.new(1, -32, 0, 5)
+closeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+closeButton.BackgroundTransparency = 0.3
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.fromRGB(220, 220, 220)
+closeButton.TextSize = 13
+closeButton.Font = Enum.Font.GothamBold
+closeButton.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 5)
+closeCorner.Parent = closeButton
+
+-- Content Frame (for minimize/maximize)
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, 0, 1, -35)
+contentFrame.Position = UDim2.new(0, 0, 0, 35)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+-- Toggle Checkbox
+local toggleFrame = Instance.new("Frame")
+toggleFrame.Size = UDim2.new(0, 200, 0, 35)
+toggleFrame.Position = UDim2.new(0.5, -100, 0, 20)
+toggleFrame.BackgroundTransparency = 1
+toggleFrame.Parent = contentFrame
+
+local checkbox = Instance.new("Frame")
+checkbox.Size = UDim2.new(0, 20, 0, 20)
+checkbox.Position = UDim2.new(0, 0, 0.5, -10)
+checkbox.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+checkbox.BorderSizePixel = 0
+checkbox.Parent = toggleFrame
+
+local checkboxCorner = Instance.new("UICorner")
+checkboxCorner.CornerRadius = UDim.new(0, 4)
+checkboxCorner.Parent = checkbox
+
+local checkboxFill = Instance.new("Frame")
+checkboxFill.Size = UDim2.new(0, 14, 0, 14)
+checkboxFill.Position = UDim2.new(0.5, -7, 0.5, -7)
+checkboxFill.BackgroundColor3 = Color3.fromRGB(120, 120, 130)
+checkboxFill.BackgroundTransparency = 1
+checkboxFill.BorderSizePixel = 0
+checkboxFill.Parent = checkbox
+
+local checkCorner = Instance.new("UICorner")
+checkCorner.CornerRadius = UDim.new(0, 3)
+checkCorner.Parent = checkboxFill
+
+local toggleLabel = Instance.new("TextLabel")
+toggleLabel.Size = UDim2.new(0, 100, 0, 20)
+toggleLabel.Position = UDim2.new(0, 28, 0.5, -10)
+toggleLabel.BackgroundTransparency = 1
+toggleLabel.Text = "ENABLE FARM"
+toggleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+toggleLabel.TextSize = 12
+toggleLabel.Font = Enum.Font.GothamBold
+toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+toggleLabel.Parent = toggleFrame
+
+-- Count Display
+local countFrame = Instance.new("Frame")
+countFrame.Size = UDim2.new(0, 100, 0, 35)
+countFrame.Position = UDim2.new(0.5, -105, 0, 70)
+countFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+countFrame.BackgroundTransparency = 0.5
+countFrame.BorderSizePixel = 0
+countFrame.Parent = contentFrame
+
+local countCorner = Instance.new("UICorner")
+countCorner.CornerRadius = UDim.new(0, 6)
+countCorner.Parent = countFrame
+
+local countLabel = Instance.new("TextLabel")
+countLabel.Size = UDim2.new(1, 0, 0.5, 0)
+countLabel.Position = UDim2.new(0, 0, 0, 4)
+countLabel.BackgroundTransparency = 1
+countLabel.Text = "EGGS"
+countLabel.TextColor3 = Color3.fromRGB(140, 140, 160)
+countLabel.TextSize = 9
+countLabel.Font = Enum.Font.Gotham
+countLabel.Parent = countFrame
+
+local countValue = Instance.new("TextLabel")
+countValue.Size = UDim2.new(1, 0, 0.5, 0)
+countValue.Position = UDim2.new(0, 0, 0, 16)
+countValue.BackgroundTransparency = 1
+countValue.Text = "0"
+countValue.TextColor3 = Color3.fromRGB(220, 180, 80)
+countValue.TextSize = 16
+countValue.Font = Enum.Font.GothamBold
+countValue.Parent = countFrame
+
+-- Current Display
+local currentFrame = Instance.new("Frame")
+currentFrame.Size = UDim2.new(0, 100, 0, 35)
+currentFrame.Position = UDim2.new(0.5, 5, 0, 70)
+currentFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+currentFrame.BackgroundTransparency = 0.5
+currentFrame.BorderSizePixel = 0
+currentFrame.Parent = contentFrame
+
+local currentCorner = Instance.new("UICorner")
+currentCorner.CornerRadius = UDim.new(0, 6)
+currentCorner.Parent = currentFrame
+
+local currentLabel = Instance.new("TextLabel")
+currentLabel.Size = UDim2.new(1, 0, 0.5, 0)
+currentLabel.Position = UDim2.new(0, 0, 0, 4)
+currentLabel.BackgroundTransparency = 1
+currentLabel.Text = "CURRENT"
+currentLabel.TextColor3 = Color3.fromRGB(140, 140, 160)
+currentLabel.TextSize = 9
+currentLabel.Font = Enum.Font.Gotham
+currentLabel.Parent = currentFrame
+
+local currentValue = Instance.new("TextLabel")
+currentValue.Size = UDim2.new(1, 0, 0.5, 0)
+currentValue.Position = UDim2.new(0, 0, 0, 16)
+currentValue.BackgroundTransparency = 1
+currentValue.Text = "-"
+currentValue.TextColor3 = Color3.fromRGB(200, 200, 200)
+currentValue.TextSize = 14
+currentValue.Font = Enum.Font.GothamBold
+currentValue.Parent = currentFrame
+
+-- ====================
+-- MINIMIZE FUNCTION
+-- ====================
+local isMinimized = false
+local minimizedSize = UDim2.new(0, 260, 0, 35)
+local expandedSize = UDim2.new(0, 260, 0, 160)
+
+local function minimize()
+    isMinimized = true
+    contentFrame.Visible = false
+    mainFrame:TweenSize(minimizedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+    minButton.Text = "+"
+end
+
+local function maximize()
+    isMinimized = false
+    contentFrame.Visible = true
+    mainFrame:TweenSize(expandedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+    minButton.Text = "-"
+end
+
+minButton.MouseButton1Click:Connect(function()
+    if isMinimized then
+        maximize()
+    else
+        minimize()
+    end
+end)
+
+-- ====================
+-- FARM LOGIC
+-- ====================
+local isFarming = false
+local farmThread = nil
+
+local function findAllCandyEggs()
+    local eggs = {}
+    for _, obj in pairs(Workspace:GetChildren()) do
+        if obj:IsA("Model") and obj.Name == "CandyEgg" then
+            table.insert(eggs, obj)
+        end
+    end
+    return eggs
+end
+
+local function teleportToEgg(egg)
+    if not egg then return false end
+    if not LocalPlayer.Character then return false end
+    
+    local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return false end
+    
+    local targetPos = egg:GetPivot().Position
+    hrp.CFrame = CFrame.new(targetPos.X, targetPos.Y + 3, targetPos.Z)
+    return true
+end
+
+local function farmLoop()
+    while isFarming do
+        local eggs = findAllCandyEggs()
+        local eggCount = #eggs
+        
+        countValue.Text = tostring(eggCount)
+        
+        if eggCount == 0 then
+            task.wait(2)
+        else
+            for i, egg in pairs(eggs) do
+                if not isFarming then break end
+                
+                currentValue.Text = i .. "/" .. eggCount
+                teleportToEgg(egg)
+                task.wait(0.2)
+            end
+            task.wait(0.5)
+        end
+    end
+end
+
+local function startFarming()
+    if isFarming then return end
+    
+    if not LocalPlayer.Character then
+        LocalPlayer.CharacterAdded:Wait()
+    end
+    
+    isFarming = true
+    checkboxFill.BackgroundTransparency = 0
+    checkboxFill.BackgroundColor3 = Color3.fromRGB(120, 120, 130)
+    
+    task.spawn(farmLoop)
+end
+
+local function stopFarming()
+    isFarming = false
+    checkboxFill.BackgroundTransparency = 1
+    currentValue.Text = "-"
+    countValue.Text = "0"
+end
+
+-- Checkbox Click
+local function toggleFarm()
+    if isFarming then
+        stopFarming()
+    else
+        startFarming()
+    end
+end
+
+checkbox.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        toggleFarm()
+    end
+end)
+
+toggleLabel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        toggleFarm()
+    end
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+    stopFarming()
+    screenGui:Destroy()
+end)
+
+print("romans puss is stanky")
+print("[FARM] Click the checkbox to start/stop farming")
+print("[FARM] Use _ to minimize, X to close")
