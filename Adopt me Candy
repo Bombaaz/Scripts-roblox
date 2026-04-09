@@ -22,8 +22,8 @@ loginGui.ResetOnSpawn = false
 loginGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local loginFrame = Instance.new("Frame")
-loginFrame.Size = UDim2.new(0, 260, 0, 140)
-loginFrame.Position = UDim2.new(0.5, -130, 0.5, -70)
+loginFrame.Size = UDim2.new(0, 260, 0, 155)
+loginFrame.Position = UDim2.new(0.5, -130, 0.5, -77)
 loginFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 loginFrame.BackgroundTransparency = 0.3
 loginFrame.Active = true
@@ -83,7 +83,7 @@ loginContent.Parent = loginFrame
 -- Label
 local keyLabel = Instance.new("TextLabel")
 keyLabel.Size = UDim2.new(1, -20, 0, 25)
-keyLabel.Position = UDim2.new(0, 10, 0, 15)
+keyLabel.Position = UDim2.new(0, 10, 0, 10)
 keyLabel.BackgroundTransparency = 1
 keyLabel.Text = "ENTER KEY:"
 keyLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -95,7 +95,7 @@ keyLabel.Parent = loginContent
 -- TextBox für Key
 local keyBox = Instance.new("TextBox")
 keyBox.Size = UDim2.new(0, 180, 0, 35)
-keyBox.Position = UDim2.new(0.5, -90, 0, 45)
+keyBox.Position = UDim2.new(0.5, -90, 0, 40)
 keyBox.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 keyBox.BackgroundTransparency = 0.3
 keyBox.Text = ""
@@ -111,14 +111,14 @@ local keyBoxCorner = Instance.new("UICorner")
 keyBoxCorner.CornerRadius = UDim.new(0, 6)
 keyBoxCorner.Parent = keyBox
 
--- Submit Button
+-- Submit Button (GRAU)
 local submitBtn = Instance.new("TextButton")
 submitBtn.Size = UDim2.new(0, 100, 0, 30)
-submitBtn.Position = UDim2.new(0.5, -50, 0, 95)
-submitBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+submitBtn.Position = UDim2.new(0.5, -50, 0, 90)
+submitBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
 submitBtn.BackgroundTransparency = 0.2
 submitBtn.Text = "SUBMIT"
-submitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+submitBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
 submitBtn.TextSize = 12
 submitBtn.Font = Enum.Font.GothamBold
 submitBtn.Parent = loginContent
@@ -130,7 +130,7 @@ submitCorner.Parent = submitBtn
 -- Error Label
 local errorLabel = Instance.new("TextLabel")
 errorLabel.Size = UDim2.new(1, -20, 0, 20)
-errorLabel.Position = UDim2.new(0, 10, 1, -25)
+errorLabel.Position = UDim2.new(0, 10, 1, -22)
 errorLabel.BackgroundTransparency = 1
 errorLabel.Text = ""
 errorLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
@@ -448,13 +448,11 @@ end
 local function checkKey()
     local inputKey = keyBox.Text
     if inputKey == REQUIRED_KEY then
-        -- Login erfolgreich
         errorLabel.Text = ""
         errorLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
         loginGui:Destroy()
         createMainGUI()
     else
-        -- Login fehlgeschlagen
         errorLabel.Text = "Wrong key! Try again."
         errorLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
         keyBox.Text = ""
