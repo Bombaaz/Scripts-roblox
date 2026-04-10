@@ -10,7 +10,7 @@ local TweenService = game:GetService("TweenService")
 -- ====================
 -- KEY CONFIG (ÄNDERE HIER DEIN PASSWORT)
 -- ====================
-local REQUIRED_KEY = "Hure"  -- <-- Ändere hier dein gewünschtes Passwort
+local REQUIRED_KEY = "wasd"  -- <-- Ändere hier dein gewünschtes Passwort
 
 -- ====================
 -- LOGIN GUI (klein wie main gui)
@@ -402,7 +402,7 @@ local function createMainGUI()
                     if not isFarming then break end
                     currentValue.Text = i .. "/" .. eggCount
                     teleportToEgg(egg)
-                    task.wait(0.2)
+                    task.wait(0.9)
                 end
                 task.wait(0.5)
             end
