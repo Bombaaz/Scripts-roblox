@@ -1,0 +1,489 @@
+-- ====================
+-- SPEED LEGENDS FARM (OPTIMIZED)
+-- ====================
+local base = 'https://raw.githubusercontent.com/17kShotsss/UI-LIBRARY/main/'
+
+local Library = loadstring(game:HttpGet(base .. 'Library.lua'))()
+local ThemeManager = loadstring(game:HttpGet(base .. 'addons/ThemeManager.lua'))()
+local SaveManager = loadstring(game:HttpGet(base .. 'addons/SaveManager.lua'))()
+
+local Window = Library:CreateWindow({
+    Title = 'SPEED LEGENDS FARM | cc: IBlame357 | discord.gg/5yhJG635bE',
+    Center = true,
+    AutoShow = true,
+})
+
+-- Tabs
+local Tabs = {
+    Main = Window:AddTab('Main'),
+    Extra = Window:AddTab('Extra'),
+    Misc = Window:AddTab('Misc'),
+    Discord = Window:AddTab('Discord'),
+    ['All Scripts!'] = Window:AddTab('All Scripts!'),
+    ['UI Settings'] = Window:AddTab('UI Settings'),
+}
+
+-- ====================
+-- DISCORD TAB
+-- ====================
+local DiscordGroup = Tabs.Discord:AddLeftGroupbox('📱 Join my Discord')
+DiscordGroup:AddLabel('Server: discord.gg/5yhJG635bE')
+DiscordGroup:AddLabel(' ')
+DiscordGroup:AddLabel('👤 My Discord: IBlame357')
+DiscordGroup:AddLabel(' ')
+DiscordGroup:AddLabel('💬 DM me on Discord if you have:')
+DiscordGroup:AddLabel('   • Bugs or Errors')
+DiscordGroup:AddLabel('   • Script Requests')
+DiscordGroup:AddLabel('   • Questions or Help')
+DiscordGroup:AddLabel('   • Suggestions')
+DiscordGroup:AddLabel(' ')
+DiscordGroup:AddLabel('🎥 YouTube: Nashoq')
+
+-- ====================
+-- ALL SCRIPTS! TAB
+-- ====================
+local ScriptsGroup = Tabs['All Scripts!']:AddLeftGroupbox('📜 All Scripts by IBlame357')
+ScriptsGroup:AddLabel('Coming Soon...')
+ScriptsGroup:AddLabel(' ')
+ScriptsGroup:AddLabel('👤 Discord: IBlame357')
+ScriptsGroup:AddLabel('🎥 YouTube: Nashoq')
+ScriptsGroup:AddLabel('🔗 Server: discord.gg/5yhJG635bE')
+ScriptsGroup:AddLabel(' ')
+ScriptsGroup:AddLabel('⚠️ If you encounter any errors:')
+ScriptsGroup:AddLabel('   → DM me on Discord: IBlame357')
+ScriptsGroup:AddLabel('   → Describe the problem')
+ScriptsGroup:AddLabel('   → I will fix it ASAP')
+
+-- ====================
+-- MAIN TAB
+-- ====================
+local OrbGroup = Tabs.Main:AddLeftGroupbox('⚡ Speed Auto Farm')
+
+OrbGroup:AddSlider('OrbDelay', {
+    Text = 'Delay between batches (ms)',
+    Default = 10,
+    Min = 5,
+    Max = 100,
+    Rounding = 0,
+})
+
+local OrbToggle = OrbGroup:AddToggle('OrbFarm', { Text = 'Auto Farm Orbs (ALL Locations)', Default = false })
+local OrbStatus = OrbGroup:AddLabel('Status: OFF')
+local OrbCountLabel = OrbGroup:AddLabel('Orbs collected: 0')
+local OrbsPerSecLabel = OrbGroup:AddLabel('Orbs/sec: 0')
+
+-- Locations
+local locations = {
+    "City",
+    "Magma City",
+    "Snow City",
+    "Mysterious Cave",
+    "Speed Jungle",
+    "Inferno Cave"
+}
+
+local orbActive = false
+local orbThread = nil
+local orbCount = 0
+local lastTime = tick()
+local orbsPerSec = 0
+local currentDelay = 10
+
+local function ExecuteBatch()
+    for _, location in pairs(locations) do
+        pcall(function()
+            local argsOrange = { "collectOrb", "Orange Orb", location }
+            game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("orbEvent"):FireServer(unpack(argsOrange))
+            
+            local argsBlue = { "collectOrb", "Blue Orb", location }
+            game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("orbEvent"):FireServer(unpack(argsBlue))
+        end)
+    end
+    orbCount = orbCount + (2 * #locations)
+end
+
+local function StartOrb()
+    if orbActive then return end
+    orbActive = true
+    orbCount = 0
+    lastTime = tick()
+    orbsPerSec = 0
+    OrbCountLabel:SetText('Orbs collected: 0')
+    OrbsPerSecLabel:SetText('Orbs/sec: 0')
+    OrbStatus:SetText('Status: FARMING...')
+    
+    orbThread = task.spawn(function()
+        while orbActive do
+            currentDelay = Options.OrbDelay.Value
+            ExecuteBatch()
+            OrbCountLabel:SetText('Orbs collected: ' .. orbCount)
+            
+            local now = tick()
+            if now - lastTime >= 1 then
+                orbsPerSec = orbCount / (now - lastTime)
+                OrbsPerSecLabel:SetText(string.format('Orbs/sec: %.0f', orbsPerSec))
+                lastTime = now
+                orbCount = 0
+            end
+            
+            task.wait(currentDelay / 1000)
+        end
+    end)
+end
+
+local function StopOrb()
+    orbActive = false
+    if orbThread then task.cancel(orbThread) end
+    OrbStatus:SetText('Status: OFF')
+    OrbsPerSecLabel:SetText('Orbs/sec: 0')
+end
+
+OrbToggle:OnChanged(function()
+    if OrbToggle.Value then StartOrb() else StopOrb() end
+end)
+
+-- ====================
+-- GEM AUTO FARM
+-- ====================
+local GemGroup = Tabs.Main:AddRightGroupbox('💎 Gem Auto Farm')
+
+GemGroup:AddSlider('GemDelay', {
+    Text = 'Delay between gems (ms)',
+    Default = 5,
+    Min = 5,
+    Max = 100,
+    Rounding = 0,
+})
+
+local GemToggle = GemGroup:AddToggle('GemFarm', { Text = 'Auto Farm Gems', Default = false })
+local GemStatus = GemGroup:AddLabel('Status: OFF')
+local GemCountLabel = GemGroup:AddLabel('Gems collected: 0')
+local GemsPerSecLabel = GemGroup:AddLabel('Gems/sec: 0')
+
+local gemActive = false
+local gemThread = nil
+local gemCount = 0
+local gemLastTime = tick()
+local gemsPerSec = 0
+local currentGemDelay = 5
+
+local function ExecuteGem()
+    pcall(function()
+        local args = { "collectOrb", "Gem", "City" }
+        game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("orbEvent"):FireServer(unpack(args))
+    end)
+end
+
+local function StartGem()
+    if gemActive then return end
+    gemActive = true
+    gemCount = 0
+    gemLastTime = tick()
+    gemsPerSec = 0
+    GemCountLabel:SetText('Gems collected: 0')
+    GemsPerSecLabel:SetText('Gems/sec: 0')
+    GemStatus:SetText('Status: FARMING...')
+    
+    gemThread = task.spawn(function()
+        while gemActive do
+            currentGemDelay = Options.GemDelay.Value
+            ExecuteGem()
+            gemCount = gemCount + 1
+            GemCountLabel:SetText('Gems collected: ' .. gemCount)
+            
+            local now = tick()
+            if now - gemLastTime >= 1 then
+                gemsPerSec = gemCount / (now - gemLastTime)
+                GemsPerSecLabel:SetText(string.format('Gems/sec: %.0f', gemsPerSec))
+                gemLastTime = now
+                gemCount = 0
+            end
+            
+            task.wait(currentGemDelay / 1000)
+        end
+    end)
+end
+
+local function StopGem()
+    gemActive = false
+    if gemThread then task.cancel(gemThread) end
+    GemStatus:SetText('Status: OFF')
+    GemsPerSecLabel:SetText('Gems/sec: 0')
+end
+
+GemToggle:OnChanged(function()
+    if GemToggle.Value then StartGem() else StopGem() end
+end)
+
+-- ====================
+-- EXTRA TAB
+-- ====================
+local RebirthGroup = Tabs.Extra:AddLeftGroupbox('🔄 Auto Rebirth')
+local RebirthToggle = RebirthGroup:AddToggle('AutoRebirth', { Text = 'Auto Rebirth', Default = false })
+
+local GiftGroup = Tabs.Extra:AddRightGroupbox('🎁 Auto Claim Gifts')
+local GiftToggle = GiftGroup:AddToggle('AutoClaimGifts', { Text = 'Auto Claim Gifts (1-8)', Default = false })
+
+local QuestGroup = Tabs.Extra:AddLeftGroupbox('📋 Auto Claim Quests')
+local QuestToggle = QuestGroup:AddToggle('AutoClaimQuests', { Text = 'Auto Claim Quests', Default = false })
+
+local WheelGroup = Tabs.Extra:AddRightGroupbox('🎡 Auto Spin Wheel')
+local WheelToggle = WheelGroup:AddToggle('AutoSpinWheel', { Text = 'Auto Spin Fortune Wheel', Default = false })
+
+-- Rebirth
+local rebirthActive = false
+local rebirthThread = nil
+
+local function ExecuteRebirth()
+    pcall(function()
+        local args = { "rebirthRequest" }
+        game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("rebirthEvent"):FireServer(unpack(args))
+    end)
+end
+
+local function StartRebirth()
+    if rebirthActive then return end
+    rebirthActive = true
+    rebirthThread = task.spawn(function()
+        while rebirthActive do
+            ExecuteRebirth()
+            task.wait(0.5)
+        end
+    end)
+end
+
+local function StopRebirth()
+    rebirthActive = false
+    if rebirthThread then task.cancel(rebirthThread) end
+end
+
+RebirthToggle:OnChanged(function()
+    if RebirthToggle.Value then StartRebirth() else StopRebirth() end
+end)
+
+-- Gifts
+local giftActive = false
+local giftThread = nil
+
+local function ExecuteGift(num)
+    pcall(function()
+        local args = { "claimGift", num }
+        game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("freeGiftClaimRemote"):InvokeServer(unpack(args))
+    end)
+end
+
+local function StartGift()
+    if giftActive then return end
+    giftActive = true
+    giftThread = task.spawn(function()
+        while giftActive do
+            for i = 1, 8 do ExecuteGift(i) end
+            task.wait(0.2)
+        end
+    end)
+end
+
+local function StopGift()
+    giftActive = false
+    if giftThread then task.cancel(giftThread) end
+end
+
+GiftToggle:OnChanged(function()
+    if GiftToggle.Value then StartGift() else StopGift() end
+end)
+
+-- Quests
+local questActive = false
+local questThread = nil
+
+local function ExecuteQuest()
+    pcall(function()
+        local args = { "collectQuest", Instance.new("Folder", nil) }
+        game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("questsEvent"):FireServer(unpack(args))
+    end)
+end
+
+local function StartQuest()
+    if questActive then return end
+    questActive = true
+    questThread = task.spawn(function()
+        while questActive do
+            ExecuteQuest()
+            task.wait(0.3)
+        end
+    end)
+end
+
+local function StopQuest()
+    questActive = false
+    if questThread then task.cancel(questThread) end
+end
+
+QuestToggle:OnChanged(function()
+    if QuestToggle.Value then StartQuest() else StopQuest() end
+end)
+
+-- Wheel
+local wheelActive = false
+local wheelThread = nil
+
+local function ExecuteWheel()
+    pcall(function()
+        local args = {
+            "openFortuneWheel",
+            game:GetService("ReplicatedStorage"):WaitForChild("fortuneWheelChances"):WaitForChild("Fortune Wheel")
+        }
+        game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("openFortuneWheelRemote"):InvokeServer(unpack(args))
+    end)
+end
+
+local function StartWheel()
+    if wheelActive then return end
+    wheelActive = true
+    wheelThread = task.spawn(function()
+        while wheelActive do
+            ExecuteWheel()
+            task.wait(1)
+        end
+    end)
+end
+
+local function StopWheel()
+    wheelActive = false
+    if wheelThread then task.cancel(wheelThread) end
+end
+
+WheelToggle:OnChanged(function()
+    if WheelToggle.Value then StartWheel() else StopWheel() end
+end)
+
+-- ====================
+-- MISC TAB
+-- ====================
+local SpeedGroup = Tabs.Misc:AddLeftGroupbox('⚙️ Speed Settings')
+
+SpeedGroup:AddSlider('CustomSpeed', {
+    Text = 'Speed Value (50-1500)',
+    Default = 111,
+    Min = 50,
+    Max = 1500,
+    Rounding = 0,
+})
+
+local SpeedToggle = SpeedGroup:AddToggle('SetSpeed', { Text = 'Set Custom Speed', Default = false })
+local SpeedStatus = SpeedGroup:AddLabel('Speed Status: OFF')
+
+local JumpGroup = Tabs.Misc:AddRightGroupbox('📊 Jump Settings')
+
+JumpGroup:AddSlider('CustomJump', {
+    Text = 'Jump Value (50-1500)',
+    Default = 150,
+    Min = 50,
+    Max = 1500,
+    Rounding = 0,
+})
+
+local JumpToggle = JumpGroup:AddToggle('SetJump', { Text = 'Set Custom Jump', Default = false })
+local JumpStatus = JumpGroup:AddLabel('Jump Status: OFF')
+
+-- Speed
+local speedActive = false
+local speedThread = nil
+local currentSpeed = 111
+
+local function ExecuteSpeed()
+    pcall(function()
+        local args = { "changeSpeed", currentSpeed }
+        game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedJumpRemote"):InvokeServer(unpack(args))
+    end)
+end
+
+local function StartSpeed()
+    if speedActive then return end
+    speedActive = true
+    SpeedStatus:SetText('Speed Status: SETTING (' .. currentSpeed .. ')')
+    speedThread = task.spawn(function()
+        while speedActive do
+            ExecuteSpeed()
+            task.wait(0.5)
+        end
+    end)
+end
+
+local function StopSpeed()
+    speedActive = false
+    if speedThread then task.cancel(speedThread) end
+    SpeedStatus:SetText('Speed Status: OFF')
+end
+
+SpeedToggle:OnChanged(function()
+    currentSpeed = Options.CustomSpeed.Value
+    if SpeedToggle.Value then StartSpeed() else StopSpeed() end
+end)
+
+Options.CustomSpeed:OnChanged(function()
+    currentSpeed = Options.CustomSpeed.Value
+    if SpeedToggle.Value then SpeedStatus:SetText('Speed Status: SETTING (' .. currentSpeed .. ')') end
+end)
+
+-- Jump
+local jumpActive = false
+local jumpThread = nil
+local currentJump = 150
+
+local function ExecuteJump()
+    pcall(function()
+        local args = { "changeJump", currentJump }
+        game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedJumpRemote"):InvokeServer(unpack(args))
+    end)
+end
+
+local function StartJump()
+    if jumpActive then return end
+    jumpActive = true
+    JumpStatus:SetText('Jump Status: SETTING (' .. currentJump .. ')')
+    jumpThread = task.spawn(function()
+        while jumpActive do
+            ExecuteJump()
+            task.wait(0.5)
+        end
+    end)
+end
+
+local function StopJump()
+    jumpActive = false
+    if jumpThread then task.cancel(jumpThread) end
+    JumpStatus:SetText('Jump Status: OFF')
+end
+
+JumpToggle:OnChanged(function()
+    currentJump = Options.CustomJump.Value
+    if JumpToggle.Value then StartJump() else StopJump() end
+end)
+
+Options.CustomJump:OnChanged(function()
+    currentJump = Options.CustomJump.Value
+    if JumpToggle.Value then JumpStatus:SetText('Jump Status: SETTING (' .. currentJump .. ')') end
+end)
+
+-- ====================
+-- UI SETTINGS
+-- ====================
+local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
+MenuGroup:AddButton('Unload GUI', function() Library:Unload() end)
+MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' })
+Library.ToggleKeybind = Options.MenuKeybind
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
+ThemeManager:SetFolder('SpeedLegendsFarm')
+SaveManager:SetFolder('SpeedLegendsFarm')
+SaveManager:BuildConfigSection(Tabs['UI Settings'])
+ThemeManager:ApplyToTab(Tabs['UI Settings'])
+
+print("✅ SPEED LEGENDS FARM GELADEN - cc: IBlame357")
+print("🔗 Discord: discord.gg/5yhJG635bE")
+print("🎥 YouTube: Nashoq")
+print("👤 Bei Fehlern: DM IBlame357 auf Discord")
