@@ -1,0 +1,402 @@
+--Made from YT Nashoq
+
+-- ===========================================
+-- SILENT AIM - HEADSHOT TRUE
+-- ===========================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+-- ========== CAMERA ==========
+local Camera = workspace.CurrentCamera
+if not Camera then
+    workspace:WaitForChild("CurrentCamera")
+    Camera = workspace.CurrentCamera
+end
+
+local SilentAimActive = false
+local FOV = 300
+
+-- ========== GETNIL ==========
+local function GetNil(Name, DebugId)
+    for _, Object in getnilinstances() do
+        if Object.Name == Name and Object:GetDebugId() == DebugId then
+            return Object
+        end
+    end
+    return nil
+end
+
+-- ========== EVENT ==========
+local function getShootEvent()
+    local systemResources = ReplicatedStorage:FindFirstChild("SystemResources")
+    if systemResources then
+        local bufferCache = systemResources:FindFirstChild("BufferCache")
+        if bufferCache then
+            local requestAction = bufferCache:FindFirstChild("RequestActionSync")
+            if requestAction and requestAction:IsA("RemoteEvent") then
+                return requestAction
+            end
+        end
+    end
+    
+    for _, child in ipairs(ReplicatedStorage:GetDescendants()) do
+        if child:IsA("RemoteEvent") and (child.Name:find("Request") or child.Name:find("Action") or child.Name:find("Sync")) then
+            return child
+        end
+    end
+    
+    return nil
+end
+
+-- ========== FIND TARGET (NUR HEAD) ==========
+local function findTarget()
+    if not SilentAimActive then return nil end
+    if not Camera then return nil end
+    
+    local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    local closestTarget = nil
+    local closestDist = math.huge
+    
+    -- ALLE SPIELER
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health and humanoid.Health > 0 then
+                
+                -- NUR HEAD FÜR HEADSHOT!
+                local targetPart = player.Character:FindFirstChild("Head")
+                if not targetPart then
+                    targetPart = player.Character:FindFirstChild("UpperTorso")
+                end
+                if not targetPart then
+                    targetPart = player.Character:FindFirstChild("Torso")
+                end
+                if not targetPart then
+                    targetPart = player.Character:FindFirstChild("HumanoidRootPart")
+                end
+                
+                if targetPart then
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+                    
+                    if onScreen then
+                        local distToCrosshair = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                        
+                        if distToCrosshair <= FOV then
+                            if distToCrosshair < closestDist then
+                                closestDist = distToCrosshair
+                                closestTarget = {
+                                    Player = player,
+                                    Part = targetPart,
+                                    Position = targetPart.Position,
+                                    Humanoid = humanoid,
+                                    IsHead = targetPart.Name == "Head"
+                                }
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    -- FALLBACK: NPCs/Zombies
+    if not closestTarget then
+        local folders = {"Enemies", "enemies", "Zombies", "zombies", "Mobs", "mobs", "NPCs", "npcs"}
+        
+        for _, folderName in ipairs(folders) do
+            local folder = workspace:FindFirstChild(folderName)
+            if folder then
+                for _, enemy in ipairs(folder:GetChildren()) do
+                    if enemy:IsA("Model") then
+                        local humanoid = enemy:FindFirstChildOfClass("Humanoid")
+                        if humanoid and humanoid.Health and humanoid.Health > 0 then
+                            
+                            local targetPart = enemy:FindFirstChild("Head")
+                            if not targetPart then
+                                targetPart = enemy:FindFirstChild("UpperTorso")
+                            end
+                            if not targetPart then
+                                targetPart = enemy:FindFirstChild("Torso")
+                            end
+                            if not targetPart then
+                                targetPart = enemy:FindFirstChild("HumanoidRootPart")
+                            end
+                            
+                            if targetPart then
+                                local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+                                
+                                if onScreen then
+                                    local distToCrosshair = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                                    
+                                    if distToCrosshair <= FOV then
+                                        if distToCrosshair < closestDist then
+                                            closestDist = distToCrosshair
+                                            closestTarget = {
+                                                Enemy = enemy,
+                                                Part = targetPart,
+                                                Position = targetPart.Position,
+                                                Humanoid = humanoid,
+                                                IsHead = targetPart.Name == "Head"
+                                            }
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    -- FALLBACK 2: ALLE MODELS MIT HUMANOD
+    if not closestTarget then
+        for _, enemy in ipairs(workspace:GetChildren()) do
+            if enemy:IsA("Model") and enemy ~= LocalPlayer.Character then
+                local humanoid = enemy:FindFirstChildOfClass("Humanoid")
+                if humanoid and humanoid.Health and humanoid.Health > 0 then
+                    local name = enemy.Name:lower()
+                    if name:find("zombie") or name:find("enemy") or name:find("mob") or name:find("npc") then
+                        
+                        local targetPart = enemy:FindFirstChild("Head")
+                        if not targetPart then
+                            targetPart = enemy:FindFirstChild("UpperTorso")
+                        end
+                        if not targetPart then
+                            targetPart = enemy:FindFirstChild("Torso")
+                        end
+                        if not targetPart then
+                            targetPart = enemy:FindFirstChild("HumanoidRootPart")
+                        end
+                        
+                        if targetPart then
+                            local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+                            
+                            if onScreen then
+                                local distToCrosshair = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                                
+                                if distToCrosshair <= FOV then
+                                    if distToCrosshair < closestDist then
+                                        closestDist = distToCrosshair
+                                        closestTarget = {
+                                            Enemy = enemy,
+                                            Part = targetPart,
+                                            Position = targetPart.Position,
+                                            Humanoid = humanoid,
+                                            IsHead = targetPart.Name == "Head"
+                                        }
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    return closestTarget
+end
+
+-- ========== SILENT SHOOT ==========
+local function silentShoot()
+    if not SilentAimActive then return end
+    
+    local target = findTarget()
+    if not target then
+        Status.Text = "🔍 No target"
+        Status.TextColor3 = Color3.fromRGB(255, 200, 0)
+        return
+    end
+    
+    local event = getShootEvent()
+    if not event then
+        Status.Text = "❌ No Event"
+        Status.TextColor3 = Color3.fromRGB(255, 0, 0)
+        return
+    end
+    
+    -- RICHTUNG ZUM TARGET (HEAD)
+    local direction = (target.Part.Position - Camera.CFrame.Position).Unit
+    local origin = Camera.CFrame.Position
+    
+    -- ARGS BAUEN (EXAKT WIE IN DEINEM CODE)
+    local args = {
+        {
+            direction = direction,
+            hitPosition = target.Part.Position,
+            origin = origin,
+            hitInstance = target.Part,
+            hitHumanoid = target.Humanoid,
+            IsHeadshot = true  -- IMMER TRUE!
+        }
+    }
+    
+    -- FEUER!
+    local success = pcall(function()
+        event:FireServer(unpack(args))
+    end)
+    
+    if success then
+        local name = target.Player and target.Player.Name or target.Enemy and target.Enemy.Name or "Enemy"
+        Status.Text = "💀 " .. name
+        Status.TextColor3 = Color3.fromRGB(255, 0, 0)
+        print("🎯 HEADSHOT:", name)
+    else
+        Status.Text = "❌ Failed"
+        Status.TextColor3 = Color3.fromRGB(255, 0, 0)
+    end
+end
+
+-- ========== MOUSE HOOK ==========
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        task.wait(0.01)
+        pcall(silentShoot)
+    end
+end)
+
+-- ========== GUI ==========
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SilentAim"
+ScreenGui.Parent = game.CoreGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 220, 0, 130)
+Frame.Position = UDim2.new(0.5, -110, 0.5, -65)
+Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+Frame.BorderSizePixel = 2
+Frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
+Title.Text = "🎯 SILENT AIM"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 14
+Title.Parent = Frame
+
+local Close = Instance.new("TextButton")
+Close.Size = UDim2.new(0, 30, 0, 30)
+Close.Position = UDim2.new(1, -30, 0, 0)
+Close.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+Close.Text = "X"
+Close.TextColor3 = Color3.fromRGB(255, 255, 255)
+Close.Font = Enum.Font.GothamBold
+Close.Parent = Title
+
+local Status = Instance.new("TextLabel")
+Status.Size = UDim2.new(1, -10, 0, 25)
+Status.Position = UDim2.new(0, 5, 0, 35)
+Status.BackgroundTransparency = 1
+Status.Text = "❌ OFF"
+Status.TextColor3 = Color3.fromRGB(255, 0, 0)
+Status.Font = Enum.Font.GothamBold
+Status.TextSize = 14
+Status.Parent = Frame
+
+local Toggle = Instance.new("TextButton")
+Toggle.Size = UDim2.new(0.8, 0, 0, 35)
+Toggle.Position = UDim2.new(0.1, 0, 0, 65)
+Toggle.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+Toggle.Text = "ACTIVATE"
+Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+Toggle.Font = Enum.Font.GothamBold
+Toggle.TextSize = 14
+Toggle.Parent = Frame
+
+-- ========== FOV CIRCLE ==========
+local FOVCircle = nil
+local function createFOVCircle()
+    if FOVCircle then pcall(function() FOVCircle:Remove() end) FOVCircle = nil end
+    if Drawing and Drawing.new then
+        pcall(function()
+            FOVCircle = Drawing.new("Circle")
+            FOVCircle.Visible = false
+            FOVCircle.Color = Color3.fromRGB(255, 0, 0)
+            FOVCircle.Thickness = 2
+            FOVCircle.NumSides = 100
+            FOVCircle.Filled = false
+            FOVCircle.Radius = FOV
+            FOVCircle.Transparency = 0.3
+            FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        end)
+    end
+end
+pcall(createFOVCircle)
+
+local function updateFOVCircle()
+    if not FOVCircle then return end
+    pcall(function()
+        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        FOVCircle.Radius = FOV
+        FOVCircle.Visible = SilentAimActive
+    end)
+end
+
+local function updateStatus()
+    if not SilentAimActive then
+        Status.Text = "❌ OFF"
+        Status.TextColor3 = Color3.fromRGB(255, 0, 0)
+        if FOVCircle then FOVCircle.Visible = false end
+        return
+    end
+    local target = findTarget()
+    if target then
+        local name = target.Player and target.Player.Name or target.Enemy and target.Enemy.Name or "Enemy"
+        Status.Text = "🎯 " .. name
+        Status.TextColor3 = Color3.fromRGB(0, 255, 0)
+    else
+        Status.Text = "🔍 Searching..."
+        Status.TextColor3 = Color3.fromRGB(255, 200, 0)
+    end
+end
+
+RunService.Heartbeat:Connect(function()
+    pcall(updateFOVCircle)
+    pcall(updateStatus)
+end)
+
+Toggle.MouseButton1Click:Connect(function()
+    SilentAimActive = not SilentAimActive
+    if SilentAimActive then
+        Toggle.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+        Toggle.Text = "ACTIVE"
+        Status.Text = "✅ ON"
+        Status.TextColor3 = Color3.fromRGB(0, 255, 0)
+        print("✅ SILENT AIM ON!")
+        print("🎯 HEADSHOT TRUE!")
+    else
+        Toggle.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        Toggle.Text = "ACTIVATE"
+        Status.Text = "❌ OFF"
+        Status.TextColor3 = Color3.fromRGB(255, 0, 0)
+        if FOVCircle then FOVCircle.Visible = false end
+        print("❌ SILENT AIM OFF!")
+    end
+end)
+
+Close.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+    if FOVCircle then pcall(function() FOVCircle:Remove() end) end
+end)
+
+print([[
+=======================================
+🎯 SILENT AIM - HEADSHOT TRUE!
+=======================================
+1. ACTIVATE drücken
+2. Auf Gegner schießen
+3. IMMER HEADSHOT!
+=======================================
+]])
